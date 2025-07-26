@@ -29,6 +29,8 @@ Route::group([
         Route::resource('/statistics', StatisticController::class);
         Route::resource('/category', CategoryController::class);
         Route::resource('/product', ProductController::class);
+        Route::get('/product-edit', [ProductController::class, 'productEdit'])->name('product.edit.form');
+        Route::put('/product-update-create', [ProductController::class, 'productUpdateCreate'])->name('product.update.create');
         Route::resource('/admin-faq', AdminFaqController::class);
         Route::get('/product-check-code/{product_code}', [ProductController::class, 'productCheckCode'])->name('product.check.code');
         Route::resource('/order', OrderController::class);
@@ -76,5 +78,6 @@ Route::group([
         Route::post('/store-notificate-customer', [NotificateController::class, 'customer_store'])->name('store.notificate.customer');
         Route::put('/list-notificate-customer/{id}', [NotificateController::class, 'customer_edit'])->name('edit.notificate.customer');
         Route::delete('/delete-notificate-customer/{id}', [NotificateController::class, 'customer_delete'])->name('delete.notificate.customer');
+
     });
 });

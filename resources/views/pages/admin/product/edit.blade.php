@@ -190,6 +190,9 @@
         border: 1px solid #f00;
         background: #f1f1f1;
     }
+    .form-control, .datatable-input{
+        background-color: #dbdbdb;
+    }
     @keyframes showBtnVideo{
         from{
             opacity: 0;
@@ -201,7 +204,7 @@
 </style>
 <!-- tao-du-an -->
 <section class="section tao-du-an mb-5 mt-5">
-    <form action="{{ route('product.update', ['product' => $product->id]) }}" id="form-create-product" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('product.update.create', ['product' => $product->id ?? null]) }}" id="form-create-product" method="POST" enctype="multipart/form-data">
         {{ csrf_field() }}
         @method('PUT')
         <div class="container-fluid">
@@ -220,53 +223,23 @@
                                 </ul>
                             </div>
                         @endif
-                        <div class="mb-4"><!-- class: invalid -->
+                        <div class="mb-4">
                             <div class="row">
-                                <div class="col-sm-4" id="product-code-area">
-                                    <label for="product-code">SS02 <span class="required">*</span>
-                                    </label>
-                                    <input class="form-control require" id="product-code" name="product_code" type="text" placeholder="SS02" value="{{ $product->product_code }}" required>
-                                    @error('product_code')
-                                        <span class="invalid-feedback" role="alert">
-                                            <strong>{{ $message }}</strong>
-                                        </span>
-                                    @enderror
+                                <div class="col-sm-3 mb-2">
+                                    <label>Ngày</label>
+                                    <input class="form-control" type="date" value="{{ date('Y-m-d', strtotime($filter_date)) }}" />
                                 </div>
-                                <div class="col-sm-8">
-                                    <label for="product-name">SS01 <span class="required">*</span>
-                                    </label>
-                                    <input class="form-control require" id="product-name" name="name" type="text" placeholder="SS01" value="{{ $product->name }}" required>
-                                    @error('name')
-                                        <span class="invalid-feedback" role="alert">
-                                            <strong>{{ $message }}</strong>
-                                        </span>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="inputlist-table">Thuộc danh mục <span>(nếu có)</span></label>
-                            <select class="form-select form-control" name="category_id" id="category_id" data-placeholder="Thuộc danh mục">
-                                <option value="">Chọn thuộc danh mục</option>
-                                @if(!empty($categories))
-                                    @foreach($categories as $category)
-                                        <option {!! isset($product->category_id) && $category->id == $product->category_id ? 'selected' : '' !!} value="{{ $category->id }}">{{ $category->name }}</option>
-                                    @endforeach
-                                @endif
-                            </select>
-                        </div>
-                        <div class="mb-4">
-                            <label for="inputlist-table">Mô tả <span>(nếu có)</span></label>
-                            <textarea id="description" placeholder="Mô tả sản phẩm" name="description" class="form-control">{{ $product->description }}</textarea>
-                        </div>
-                        <div class="mb-4 row">
-                            <div class="col-sm-8">
-                                <label for="inputlist-table">Giá sản phẩm</label>
-                                <input class="form-control" id="price" name="price" type="number" placeholder="Giá sản phẩm" value="{{ $product->price }}">
-                            </div>
-                            <div class="col-sm-4">
-                                <label for="inputlist-table">Số lượng trong kho</label>
-                                <input class="form-control" id="stock" name="stock" type="number" placeholder="Số lượng trong kho" value="{{ $product->stock }}">
+                                <div class="col-sm-9"></div>
+                                @for($i = 1; $i <= $data_columns; $i++)
+                                    <div class="col-sm-3 mt-2">
+                                        <label>{{$category_name . $i}}</label>
+                                        <select name="{{'data'.$i}}" class="form-control">
+                                                <option value="">-- Lựa chọn --</option>
+                                                <option value="1">OK</option>
+                                                <option value="0">NOT OK</option>
+                                        </select>
+                                   </div>
+                                @endfor
                             </div>
                         </div>
                         <div class="mb-4">
@@ -288,30 +261,6 @@
         </div>
     </form>
 </section>
-<!-- end list-table -->
-<!-- Modal Change Password -->
-<div class="modal fade CheckUrl" id="CheckUrl" tabindex="-1" aria-labelledby="CheckUrlLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-body">
-                <div class="map-info">
-                    <input id="search-places" placeholder="Nhập theo cú pháp: Cửa hàng + Địa chỉ" type="text" class="controls form-control" >
-                    <div id="map"></div>
-                    <div id="infowindow-content">
-                        <h2 id="place-name" class="title"></h2>
-                        <p id="place-address"></p>
-                        <p id="place-telephone"></p>
-                        <p id="place-rate"></p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Đóng</button>
-                <button type="button" class="btn btn-primary" id="confirm-url-map">Xác nhận</button>
-            </div>
-        </div>
-    </div>
-</div>
 <script>
     $('#parent').select2( {
         theme: 'bootstrap-5',

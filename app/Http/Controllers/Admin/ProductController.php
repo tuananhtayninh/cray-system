@@ -20,10 +20,11 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $data = array();
-        $data['products'] = $this->productService->list($request);
+        $data['products'] = $this->productService->listGroupByDay($request);
         $data['categories'] = $this->productService->getCategories($request);
         $data['data_columns'] = 9;
         $data_request = $request->all();
+        $data['category_id'] = 2;
         if(isset($data_request['category_id'])){
             $data['filter_category'] = $data_request['category_id'];
             switch($data_request['category_id']){
@@ -33,9 +34,17 @@ class ProductController extends Controller
                 case 3:
                     $data['data_columns'] = 16;
                     break;
-                $data['data_columns'] = 5;
+                case 4:
+                    $data['data_columns'] = 5;
                     break;
+                case 5:
+                    $data['data_columns'] = 4;
+                    break;
+                default: 
+                    $data['data_columns'] = 9;
+                        break;
             }
+            $data['category_id'] = $data_request['category_id'];
         }
         return view('pages.admin.product.list', $data);
     }
@@ -83,10 +92,38 @@ class ProductController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(string $id, Request $request)
     {
-        $product = $this->productService->show($id);
-        return view('pages.admin.product.edit', compact('product'));
+        $product = $this->productService->show($id); 
+        $data_columns = 9;
+        $data_request = $request->all();
+        $category_name = 'SSO';
+        if(isset($data_request['category_id'])){
+            $data['filter_category'] = $data_request['category_id'];
+            switch($data_request['category_id']){
+                case 2:
+                    $data_columns = 9;
+                    $category_name = 'SSO';
+                    break;
+                case 3:
+                    $data_columns = 16;
+                    $category_name = 'T24';
+                    break;
+                case 4:
+                    $data_columns = 16;
+                    $category_name = 'T24R';
+                    break;
+                case 5:
+                    $data_columns = 4;
+                    $category_name = '';
+                    break;
+                default: 
+                    $data_columns = 9;
+                    $category_name = 'SSO';
+                        break;
+            }
+        }
+        return view('pages.admin.product.edit', compact('product','data_columns','category_name'));
     }
 
     /**
@@ -150,5 +187,45 @@ class ProductController extends Controller
             'data' => $data,
             'status' => $data ? true : false
         ]);
+    }
+
+    public function productUpdateCreate(){
+
+    }
+
+    public function productEdit(Request $request){
+        if(!isset($request->date) || !isset($request->category_id)) return back()->with('warning', 'Không có params!');
+        $product = $this->productService->showByDate($request->date,$request->category_id); 
+        $data_columns = 9;
+        $data_request = $request->all();
+        $category_name = 'SSO';
+        if(isset($data_request['category_id'])){
+            $data['filter_category'] = $data_request['category_id'];
+            switch($data_request['category_id']){
+                case 2:
+                    $data_columns = 9;
+                    $category_name = 'SSO';
+                    break;
+                case 3:
+                    $data_columns = 16;
+                    $category_name = 'T24';
+                    break;
+                case 4:
+                    $data_columns = 16;
+                    $category_name = 'T24R';
+                    break;
+                case 5:
+                    $data_columns = 4;
+                    $category_name = '';
+                    break;
+                default: 
+                    $data_columns = 9;
+                    $category_name = 'SSO';
+                        break;
+            }
+        }
+        $filter_date = isset($request->date) ? $request->date : '';
+        return view('pages.admin.product.edit', compact('product','data_columns','category_name', 'filter_date'));
+
     }
 }

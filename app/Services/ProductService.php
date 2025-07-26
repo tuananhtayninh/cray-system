@@ -8,6 +8,7 @@ use App\Repositories\Product\ProductRepositoryInterface;
 use App\Http\Resources\ProductResource;
 use App\Repositories\ProductImage\ProductImageRepositoryInterface;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
 
 class ProductService {
     protected $productRepository, $productImageRepository;
@@ -38,6 +39,17 @@ class ProductService {
         return $products;
     }
 
+
+    public function listGroupByDay($request){
+        $products = $this->productRepository->listGroupByDay($request);
+        $data = [];
+        foreach($products as $product){
+            if(empty($product->created_at)) return;
+            $data[date('d-m-Y', strtotime($product->created_at))] = $product;
+        }
+        return $data;
+    }
+
     public function fullList($request){
         $products = $this->productRepository->list($request);
         return $products;
@@ -48,21 +60,35 @@ class ProductService {
         $data = $this->productRepository->create($product);
         if($data) {
             $imagePath = null;
+
             if ($request->hasFile('image')) {
                 if(is_array($request->file('image'))){
                     foreach ($request->file('image') as $image) {
-                        $imagePath = $image->store('images/product', 'public');
+                        if ($image && $image->isValid()) {
+                            $directory = 'images/product';
+                            if (!Storage::disk('public')->exists($directory)) {
+                                Storage::disk('public')->makeDirectory($directory);
+                            }
+                            $imagePath = $image->store($directory, 'public');
+                            $this->productImageRepository->create([
+                                'product_id' => $data->id,
+                                'link_image' => $imagePath
+                            ]);
+                        }
+                    }
+                }else{
+                    $image = $request->file('image');
+                    if ($image && $image->isValid()) {
+                        $directory = 'images/product';
+                        if (!Storage::disk('public')->exists($directory)) {
+                            Storage::disk('public')->makeDirectory($directory);
+                        }
+                        $imagePath = $image->store($directory, 'public');
                         $this->productImageRepository->create([
                             'product_id' => $data->id,
                             'link_image' => $imagePath
                         ]);
                     }
-                }else{
-                    $imagePath = $request->file('image')->store('images/product', 'public');
-                    $this->productImageRepository->create([
-                        'product_id' => $data->id,
-                        'link_image' => $imagePath
-                    ]);
                 }
             }
             return $data;
@@ -72,6 +98,11 @@ class ProductService {
 
     public function show($id){
         $data = $this->productRepository->find($id);
+        return $data;
+    }
+
+    public function showByDate($date, $categoryId){
+        $data = $this->productRepository->showByDate($date, $categoryId);
         return $data;
     }
 
@@ -96,16 +127,20 @@ class ProductService {
                     $this->productImageRepository->delete($img->id);
                 }
             }
+            $directory = 'images/product';
+            if (!Storage::disk('public')->exists($directory)) {
+                Storage::disk('public')->makeDirectory($directory);
+            }
             if(is_array($request->file('image'))){
                 foreach ($request->file('image') as $image) {
-                    $imagePath = $image->store('images/product', 'public');
+                    $imagePath = $image->store($directory, 'public');
                     $this->productImageRepository->create([
                         'product_id' => $data->id,
                         'link_image' => $imagePath
                     ]);
                 }
             }else{
-                $imagePath = $request->file('image')->store('images/product', 'public');
+                $imagePath = $request->file('image')->store($directory, 'public');
                 $this->productImageRepository->create([
                     'product_id' => $data->id,
                     'link_image' => $imagePath
@@ -122,17 +157,13 @@ class ProductService {
 
     private function filterData($request): array{
         $data = is_array($request) ? $request : $request->all();
-        return array(
-            'name' => $data['name'] ?? null,
-            'category_id' => $data['category_id'] ?? null,
-            'slug' => slugify($data['name']) ?? null,
-            'price' => $data['price'] && $data['price'] > 0 ? $data['price'] : 0,
-            'description' => $data['description'] ?? null,
-            'product_code' => $data['product_code'] ?? null,
-            'sku' => $data['sku'] ?? null,
-            'stock' => $data['stock'] ?? 0,
-            'keyword' => $data['keyword'] ?? $data['name']
-        );
+        $data_request = [];
+        for($i = 1; $i <= 16; $i++){
+            if(!empty($data['data'.$i])){
+                $data_request['data'.$i] = trim($data['data'.$i]);
+            }
+        }
+        return $data_request;
     }
 
     public function checkCode($product_code){

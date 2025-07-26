@@ -172,8 +172,7 @@
                                 </div>
                             </div>
                         </div>
-                    `);
-                    $('#ViTri').modal('show');
+                    `); 
                     switch (error.code) {
                         case error.PERMISSION_DENIED:
                             console.log("Người dùng đã từ chối yêu cầu lấy vị trí.");

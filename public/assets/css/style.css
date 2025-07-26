@@ -3822,7 +3822,8 @@ h3.col-title {
   height: 68px;
   vertical-align: middle;
   padding: 5px;
-  min-width: 160px;
+  min-width: 100px;
+  text-align: center;
 }
 .list-table th{
   text-align: center;

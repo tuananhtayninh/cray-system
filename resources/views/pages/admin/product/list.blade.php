@@ -23,13 +23,6 @@
     <!-- danh-sach-du-an -->
     <section class="section danh-sach-du-an mb-5">
         <div class="container-fluid">
-            <div class="row">
-                <div class="clear col-sm-12 text-right">
-                    <button class="btn btn-primary my-3" type="button" onclick="window.location.href='{{ route('product.create') }}'">
-                        <i class="fas fa-plus"></i> Đăng sản phẩm
-                    </button>
-                </div>
-            </div>
             <div class="col-inner" style="overflow: scroll">
                 <h2 class="section-title mb-4">Danh sách DailyCheck</h2>
                 <div id="group-alert">
@@ -54,16 +47,14 @@
                 <form>
                     <div class="input-group group-search">
                         <div class="input-group">
-                            <button class="input-group-text" type="submit">
-                                <span class="material-symbols-outlined">search</span>
-                            </button>
-                            <select class="form-control" id="select-categories">
+                            <select class="form-control col-sm-8" id="select-categories">
                                 @foreach($categories as $category)
-                                    <option value="{{$category->id}}">{{$category->name}}</option>
+                                    <option value="{{$category->id}}" {!! $category->id == $category_id ? 'selected' : '' !!}>{{$category->name}}</option>
                                 @endforeach
                             </select>
+                            <input class="form-control col-sm-2" type="date" placeholder="Tìm kiếm" id="search-input">
                         </div>
-                        <button class="btn btn-default btn-filter" type="button" onclick="filter()">
+                        <button class="btn btn-default btn-filter" type="button">
                             <img src="{{ asset('./assets/img/filter.svg') }}" alt="filter"> <span>Tìm kiếm</span>
                         </button>
                     </div>
@@ -72,75 +63,88 @@
                     <thead>
                         <tr>
                             <th class="list-table-stt" scope="col">STT</th>
+                            <th>Ngày</th>
                             @for($i = 1; $i <= $data_columns; $i++)
                                 @if($data_columns == 9)
                                     <th class="list-table-product-name" scope="col">SSO{{$i}}</th>
                                 @elseif($data_columns == 16)
                                     <th class="list-table-product-name" scope="col">T24{!!$i<10?'0'.$i:$i!!}</th>
-                                @else
-                                    <th class="list-table-product-name" scope="col">T24{!!$i<10?'0'.$i:$i!!}</th>
+                                @elseif($data_columns == 5)
+                                    <th class="list-table-product-name" scope="col">T24R{!!$i<10?'0'.$i:$i!!}</th>
                                 @endif
                             @endfor
+                            @if($data_columns === 4)
+                                <th class="list-table-product-name" scope="col">EDW</th>
+                                <th class="list-table-product-name" scope="col">GW</th>
+                                <th class="list-table-product-name" scope="col">Status</th>
+                                <th class="list-table-product-name" scope="col">Ghi Chú</th>
+                            @endif
+                            @if($data_columns !== 4)
                             <th class="list-table-image" scope="col">   
                                 Hình lỗi
                             </th>
-                            <th class="list-table-product">
-                                Danh mục
-                            </th>
-                            <th class="list-table-price">
-                                Giá sản phẩm
-                            </th>
+                            @endif
                             <th class="list-table-handle">
                                 Thao tác
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if(!empty($products) && count($products) > 0)
-                            @foreach($products as $product)
-                                <tr id="item-product-{{ $product->id }}">
-                                    <td class="list-table-product-name" scope="col">{{ $product->id }}</td>
-                                    <td class="list-table-product-code text-center" scope="col">
-                                    {{ $product->name }}
-                                    </td>
-                                    <td class="list-table-product-code text-center" scope="col">
-                                    {{ $product->product_code }}
-                                    </td>
+                        @for($i = 1; $i <= 31; $i++)
+                                @php
+                                    $key = ($i < 10 ? '0'.$i : $i) . '-' . date('m-Y');
+                                @endphp
+                                @if(!empty($products[$key]))
+                                <tr id="item-product-{{ $products[$key]->id }}">
+                                    <td class="text-center">{{$i}}</td>
+                                    <td>{{ $i . '/'. date('m') .  '/'. date('Y') }}</td>
+                                    @for($j = 1; $j <= $data_columns; $j++)
+                                        <td class="list-table-product-name text-center" scope="col">
+                                                @php
+                                                    $value = $products[$key]->{'data' . $j};
+                                                @endphp
+                                                @if($value === null)
+                                                    {{-- empty --}}
+                                                @else
+                                                    {{ $value ? 'OK' : 'NOT OK' }}
+                                                @endif
+                                        </td>
+                                    @endfor
+                                    @if($data_columns !== 4)
                                     <td class="list-table-image text-center" scope="col">   
-                                        <img src="{!! !empty($product->images[0]?->link_image) ? asset('storage/'.$product->images[0]->link_image) : asset('assets/img/no-image.png') !!}" alt="image" width="100px">
+                                        <img src="{!! !empty($products[$key]->images[0]?->link_image) ? asset('storage/'.$products[$key]->images[0]->link_image) : asset('assets/img/no-image.png') !!}" alt="image" width="100px">
                                     </td>
-                                    <td class="list-table-product">
-                                        
-                                    </td>
-                                    <td class="list-table-price text-center">
-                                        {!! formatVND($product->price) !!}
-                                    </td>
+                                    @endif
                                     <td class="list-table-handle text-center">
-                                        <button class="btn btn-info" type="button" onclick="handleEdit({{ $product->id }})">
+                                        <button class="btn btn-info" type="button" onclick="handleEdit('{{ $key }}','{{ $category_id }}')">
                                             <span class="material-symbols-outlined">
                                                 edit
                                             </span>
                                         </button>
-                                        <button class="btn btn-danger" type="button" onclick="handleDelete({{ $product->id }})">
+                                    </td>
+                                </tr>
+                                @else
+                                <tr id="item-product-{{ $key }}">
+                                    <td class="text-center">{{$i}}</td>
+                                    <td>{{ $i . '/'. date('m') .  '/'. date('Y') }}</td>
+                                    @if($data_columns !== 4)
+                                    <td class="list-table-product-name" scope="col"></td>
+                                    @endif
+                                    @for($j = 1; $j <= $data_columns; $j++)
+                                        <td class="list-table-product-name" scope="col">--</td>
+                                    @endfor
+                                    <td class="list-table-price text-center">
+                                        <button class="btn btn-info" type="button" onclick="handleEdit('{{ $key }}','{{ $category_id }}')">
                                             <span class="material-symbols-outlined">
-                                                delete
+                                                edit
                                             </span>
                                         </button>
                                     </td>
                                 </tr>
-                            @endforeach
-                        @else
-                            <tr class="no-result">
-                                <td colspan="7">
-                                    <img src="{{ asset('assets/img/no-image.svg') }}" alt="no-data"> <span>{{ __('Chưa có sản phẩm') }}</span>
-                                </td>
-                            </tr>
-                        @endif
+                                @endif
+                            @endfor
                     </tbody>
                 </table>
-                @if(!empty($products) && count($products) > 0)
-                {{ $products->links('vendor.pagination.custom') }}
-                @endif
             </div>
         </div>
     </section>
@@ -148,27 +152,24 @@
 @endsection
 @section('js')
     <script>
-        function handleEdit(id) {
-            window.location.href = "{{route('product.edit', ['product' => 'ID_PRODUCT'])}}".replace('ID_PRODUCT', id);
+        function handleEdit(date,categoryId) {
+            window.location.href = '{{ route("product.edit.form") }}?date=' + date + '&category_id=' + categoryId;
         }
-        function filterCategories(){
-            let category_id = $('')
-        }
-        function handleDelete(id){
-            $.ajax({
-                url: "{{route('product.destroy', ['product' => 'ID_PRODUCT'])}}".replace('ID_PRODUCT', id),
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    id: id,
-                    _method: 'DELETE'
-                },
-                dataType: 'json',
-                success: function (data) {
-                    $('#item-product-'+id).remove();
-                    showAlert('success','Xóa thành công');
+        $(document).ready(function(){
+            $('.btn-filter').on('click', function(){
+                let categoryId = $('#select-categories').val();
+                let dateSearch = $('#search-input').val();
+                let linkUrl = '/admin/product';
+                if(dateSearch){
+                    linkUrl += '?date='+dateSearch;
                 }
-            })
-        }
+                if(categoryId){
+                    linkUrl += (dateSearch) ? "&" : "?";
+                    linkUrl += "category_id="+categoryId;
+                }
+                if(linkUrl === '') return;
+                window.location.href  = linkUrl;
+            });
+        })
     </script>
 @endsection
